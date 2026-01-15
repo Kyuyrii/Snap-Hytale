@@ -1,0 +1,66 @@
+name: hytale
+base: core24
+adopt-info: hytale-app
+platforms:
+  amd64:
+    build-on: [amd64]
+    build-for: [amd64]
+summary: Launcher for Hytale
+description: |
+ The Hytale Launcher allows you to download, install, and play Hytale.
+ Stay up to date with the latest game updates and manage your game installation. 
+grade: stable
+confinement: strict
+icon: com.hypixel.HytaleLauncher.png
+license: Proprietary
+
+apps:
+  hytale:
+    command: usr/bin/hytale-launcher-wrapper-snap
+    desktop: usr/share/applications/com.hypixel.HytaleLauncher.desktop
+    common-id: com.hypixel.HytaleLauncher
+    extensions: [gnome]
+    plugs:
+      - audio-playback
+      - network
+      - network-bind
+      - network-status
+      - screen-inhibit-control
+      - home
+      - removable-media
+      - system-observe
+      - joystick
+      - bluez
+
+plugs:
+  shared-memory:
+    private: true
+
+parts:
+  hytale-app:
+    plugin: nil
+    build-packages: [wget, curl, jq, unzip]
+    override-build: |
+      curl -s https://launcher.hytale.com/version/release/launcher.json > version.json
+      VERSION=$(jq -r '.version' version.json)
+
+      wget "https://launcher.hytale.com/builds/release/linux/amd64/hytale-launcher-${VERSION}.zip"
+      unzip "hytale-launcher-${VERSION}.zip"
+
+      mkdir -p $CRAFT_PART_INSTALL/usr/bin
+      mv -f hytale-launcher $CRAFT_PART_INSTALL/usr/bin/
+
+      craftctl set version="$VERSION"
+    prime:
+      - usr/bin/hytale-launcher
+
+  hytale-files:
+    after: [hytale-app]
+    plugin: dump
+    source: .
+    organize:
+      hytale-launcher-wrapper-snap.sh: usr/bin/hytale-launcher-wrapper-snap
+      com.hypixel.HytaleLauncher.desktop: usr/share/applications/com.hypixel.HytaleLauncher.desktop
+      LICENSE: usr/share/licenses/hytale/LICENSE
+    prime:
+      - usr
