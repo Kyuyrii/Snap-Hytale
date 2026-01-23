@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Hytale Launcher
-Comment=Official launcher for Hytale
+Comment=Launcher for Hytale
 Exec=hytale-launcher-wrapper
 Icon=com.hypixel.HytaleLauncher
 Terminal=false
