@@ -1,5 +1,5 @@
 name: hytale
-base: core24
+base: core26
 adopt-info: hytale-app
 platforms:
   amd64:
@@ -16,19 +16,11 @@ license: Proprietary
 
 apps:
   hytale:
-    command-chain:
-      - snap/command-chain/gpu-2404-wrapper
-      - snap/command-chain/desktop-launch
     command: usr/bin/hytale-launcher-wrapper-snap
     desktop: usr/share/applications/com.hypixel.HytaleLauncher.desktop
     common-id: com.hypixel.HytaleLauncher
+    extensions: [gnome]
     plugs:
-      - desktop
-      - desktop-legacy
-      - gsettings
-      - opengl
-      - wayland
-      - x11
       - audio-playback
       - network
       - network-bind
@@ -40,65 +32,22 @@ apps:
       - joystick
       - bluez
 
-environment:
-  SNAP_DESKTOP_RUNTIME: $SNAP/gnome-platform
-  GTK_USE_PORTAL: '1'
-
 plugs:
   shared-memory:
     private: true
-  desktop:
-    mount-host-font-cache: false
-  gtk-3-themes:
-    interface: content
-    target: $SNAP/data-dir/themes
-    default-provider: gtk-common-themes
-  icon-themes:
-    interface: content
-    target: $SNAP/data-dir/icons
-    default-provider: gtk-common-themes
-  sound-themes:
-    interface: content
-    target: $SNAP/data-dir/sounds
-    default-provider: gtk-common-themes
-  gnome-46-2404:
-    interface: content
-    target: $SNAP/gnome-platform
-    default-provider: gnome-46-2404
-  gpu-2404:
-    interface: content
-    target: $SNAP/gpu-2404
-    default-provider: mesa-2404
-
-layout:
-  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.0:
-    symlink: $SNAP/gnome-platform/usr/lib/x86_64-linux-gnu/webkit2gtk-4.0
-  /usr/lib/x86_64-linux-gnu/webkit2gtk-4.1:
-    symlink: $SNAP/gnome-platform/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1
-  /usr/share/xml/iso-codes:
-    bind: $SNAP/gnome-platform/usr/share/xml/iso-codes
-  /usr/share/libdrm:
-    bind: $SNAP/gpu-2404/libdrm
-  /usr/share/drirc.d:
-    symlink: $SNAP/gpu-2404/drirc.d
-  /usr/share/X11/XErrorDB:
-    symlink: $SNAP/gpu-2404/X11/XErrorDB
-
-hooks:
-  configure:
-    command-chain:
-      - snap/command-chain/hooks-configure-fonts
 
 parts:
   hytale-app:
     plugin: nil
-    build-packages: [wget, curl, jq, unzip]
+    build-packages: [wget, curl, jq]
     override-build: |
+      set -eux
+
       curl -s https://launcher.hytale.com/version/release/launcher.json > version.json
       VERSION=$(jq -r '.version' version.json)
 
       wget "https://launcher.hytale.com/builds/release/linux/amd64/hytale-launcher-${VERSION}.zip"
-      unzip "hytale-launcher-${VERSION}.zip"
+      python3 -c "import zipfile; zipfile.ZipFile('hytale-launcher-${VERSION}.zip').extractall('.')"
 
       mkdir -p $CRAFT_PART_INSTALL/usr/bin
       mv -f hytale-launcher $CRAFT_PART_INSTALL/usr/bin/
@@ -115,7 +64,5 @@ parts:
       hytale-launcher-wrapper-snap.sh: usr/bin/hytale-launcher-wrapper-snap
       com.hypixel.HytaleLauncher.desktop: usr/share/applications/com.hypixel.HytaleLauncher.desktop
       LICENSE: usr/share/licenses/hytale/LICENSE
-      command-chain: snap/command-chain
     prime:
       - usr
-      - snap
